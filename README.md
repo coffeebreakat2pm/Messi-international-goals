@@ -43,7 +43,8 @@ comes in second with 6 goals.
 ### Piechart of \# of nations scored against in each confederation
 
 ![](piechart-1.png)
-
+<Br>
+    
 Despite playing in the CONMEBOL confederaion, Messi has scored against
 more nations from the UEFA confederation, a total 12 unique nations.
 While only scored against 2 nations from CAF.
