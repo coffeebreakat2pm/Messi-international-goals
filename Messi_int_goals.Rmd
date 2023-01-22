@@ -1,0 +1,164 @@
+---
+title: "Messi International Goal"
+output:
+  html_document: default
+  font-size: default
+--- 
+
+# Greatest of all time
+
+As Leo Messi establishes himself as the greatest fotball player of all time following the victory at the 2022 World cup, lets take a look at all of his 98 international goals scored (as of the 20230122).
+
+## Gathering the data
+
+The data of this analysis has been gathered by web-scraping and importing data. A comprenhensive goal list was web-scraped from wikipedia, and a dataset of all FIFA nations and its corresponding confederation was collected from kaggle. The second mentioned dataset was needed in order to join the web-scraped data for a more comprehensive list that would include Confederation of each nation.
+
+Data sources: 
+
+https://en.wikipedia.org/wiki/List_of_international_goals_scored_by_Lionel_Messi
+https://www.kaggle.com/datasets/cashncarry/fifaworldranking?resource=download
+
+```{r, include = FALSE, echo = FALSE, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(rvest)
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# reading csv file containing dataset of all ranked nations in FIFA ranking between 1992 - 2022 (last_updated 20221222)
+# source: https://www.kaggle.com/datasets/cashncarry/fifaworldranking?resource=download
+fifa <- read_csv("fifa_ranking-2022-12-22.csv")
+
+# only selecting nation names and its FIFA confederation for later use
+fifa_2022<-fifa[fifa$rank_date == "2022-12-22",] %>%
+           rename(Opponent = country_full, Confederation = confederation) %>%
+              select(2,7)
+
+# webscraping messi's goal data from wikipedia
+url = "https://en.wikipedia.org/wiki/List_of_international_goals_scored_by_Lionel_Messi"
+
+scrape_data <- url %>% 
+                read_html() %>%
+                  html_node(xpath = '//*[@id="mw-content-text"]/div[1]/table[2]') %>%
+                    html_table(fill = TRUE) %>%
+                      data.frame()
+
+new_scrape_data <- scrape_data[1:8] # removing last column which is just a reference link to the match
+
+
+
+# creating a table of opponents Messi has scored against, and how many times he was scored, while playing with Argentina NT
+goals <- new_scrape_data %>%
+            group_by(Opponent) %>%
+              summarize(goals_against = n()) %>%
+                arrange(desc(goals_against)) %>%
+                  left_join(fifa_2022, by = "Opponent")
+
+
+# clean the dataset for any mistakes of missing values
+goals %>%
+  filter(is.na(Confederation))  #shows 3 nation have "NA" as confederation after joining fifa_2022 dataset
+  
+# adding confederations to nations with NA
+goals[36,3] = "CONCACAF"
+goals[28,3] = "AFC"
+goals[33,3] = "UEFA"
+
+# grouping by goals scored against each confederation
+goals_against_conf <- goals %>%
+  group_by(Confederation) %>%
+    summarize(nations = n())
+
+# grouping by goals scored in each competition
+
+goal_comp <- new_scrape_data %>%
+              group_by(Competition) %>%
+                summarize(goals_in_comp = n()) %>%
+                  arrange(desc(goals_in_comp))
+```
+
+## Visualizing the data
+
+Lets take a deeper look of the gathered data.
+
+
+### Linechart of career goals
+```{r goals, echo = FALSE, warning = FALSE, message = FALSE}
+# linechart
+ggplot(new_scrape_data, aes(x = Cap, y = No.)) +
+  geom_line() + 
+  xlab("No. of cap") + 
+  ylab("No. of goal(s)") + 
+  annotate("text", x = 120, y = 20, label = "Goal ratio = 0.57") + 
+  geom_vline(aes(xintercept = new_scrape_data[97,2]), linetype = "dashed") +
+  geom_vline(aes(xintercept = new_scrape_data[2,2]), linetype = "dashed") +
+  geom_vline(aes(xintercept = new_scrape_data[5,2]), linetype = "dashed") +
+  geom_vline(aes(xintercept = new_scrape_data[20,2]), linetype = "dashed") +
+  geom_vline(aes(xintercept = new_scrape_data[82,2]), linetype = "dashed") +
+  geom_text(aes(new_scrape_data[2,2]), label = "First WC goal", y = 30, size = 2.5) +
+  geom_text(aes(new_scrape_data[97,2]), label = "2022 WC Final", y = 100, size = 2.5) + 
+  geom_text(aes(new_scrape_data[5,2]), label = "First CA goal", y = 50, size = 2.5) +
+  geom_text(aes(new_scrape_data[20,2]), label = "First INT hattrick", y = 60, size = 2.5) + 
+  geom_text(aes(new_scrape_data[82,2]), label = "5 Goals in 1 game", y = 70, size = 2.5)
+```
+As of 230122, Messi has socred 98 goals on 172 games, resulting in a goal ratio of 0,57. 
+
+The lineplot showcases some of his memorable goals such as first goal at a world cup and copa américa.
+
+<Br>
+
+### Barchart of goals against each opponent
+```{r barchart, echo = FALSE, warning = FALSE, message = FALSE}
+# barchart of goals scored against
+ggplot(goals, aes(x = Opponent, y = goals_against)) + 
+  geom_col() + 
+  labs(x = NULL, y = "Goals against opponent") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5)) 
+  
+```
+The barchart shows the number of goals Messi has against each nation he has scored against, Bolivia sticks out with 8 goals. Uruguay and Ecuador comes in second with 6 goals.
+
+
+### Piechart of # of nations scored against in each confederation
+```{r piechart, echo = FALSE, warning = FALSE, message = FALSE}
+# piechart(# of nations he has scored against from each confederation)
+ggplot(goals_against_conf, aes(x="", y=nations, fill=Confederation)) +
+  geom_bar(stat="identity", width=1) +
+  geom_text(aes(label = nations), 
+                position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) + 
+  theme_void() + 
+  scale_fill_brewer()
+```
+
+Despite playing in the CONMEBOL confederaion, Messi has scored against more nations from the UEFA confederation, a total 12 unique nations. While only scored against 2 nations from CAF. 
+
+
+A deeper look into the piechart gives us this dataframe:
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+goals_against_nation <- goals %>%
+  group_by(Confederation) %>%
+    summarize(nation = Opponent)
+data.frame(goals_against_nation)
+```
+
+
+### Goal in each competition
+
+Let's take a look of the competition the goals were scored in.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+goal_comp <- new_scrape_data %>%
+              group_by(Competition) %>%
+                summarize(goals_in_comp = n()) %>%
+                  arrange(desc(goals_in_comp))
+
+data.frame(goal_comp)
+
+```
+
+43 of Messi's 98 Goals has come from international friendly games. Something worth noting is how Messi has scored in every world cup he has participated in, except 2010 (!). 2022 World cup final was also the first time ever Messi has scored in a international tournament final, despite having played a hand full of finals.
+
+
+
