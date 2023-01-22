@@ -24,7 +24,7 @@ Lets take a deeper look of the gathered data.
 
 ### Linechart of career goals
 
-![](Messi_int_goals_files/figure-markdown_strict/goals-1.png) As of
+![](goals-1.png) As of
 230122, Messi has socred 98 goals on 172 games, resulting in a goal
 ratio of 0,57.
 
@@ -35,14 +35,14 @@ a world cup and copa américa.
 
 ### Barchart of goals against each opponent
 
-![](Messi_int_goals_files/figure-markdown_strict/barchart-1.png) The
+![](barchart-1.png) The
 barchart shows the number of goals Messi has against each nation he has
 scored against, Bolivia sticks out with 8 goals. Uruguay and Ecuador
 comes in second with 6 goals.
 
 ### Piechart of \# of nations scored against in each confederation
 
-![](Messi_int_goals_files/figure-markdown_strict/piechart-1.png)
+![](piechart-1.png)
 
 Despite playing in the CONMEBOL confederaion, Messi has scored against
 more nations from the UEFA confederation, a total 12 unique nations.
